@@ -2,8 +2,9 @@ const express = require('express');
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
-const public_users = express.Router();
 
+const axios = require('axios');
+const public_users = express.Router();
 
 public_users.post("/register", (req, res) => {
   const { username, password } = req.body; // Extract username and password from request body
@@ -24,76 +25,60 @@ public_users.post("/register", (req, res) => {
 });
 
 
-// Get the book list available in the shop
-public_users.get('/', function (req, res) {
-  return res.status(200).send(JSON.stringify(books, null, 2));
-});
 
-// Get book details based on ISBN
-public_users.get('/isbn/:isbn', function (req, res) {
-  let isbn = req.params.isbn;
-  let book = books[isbn];
-
-  if (book) {
-      return res.status(200).send(JSON.stringify(book, null, 2));
-  } else {
-      return res.status(404).json({ message: "Book not found" });
+// Get all books using Async-Await
+public_users.get('/', async (req, res) => {
+  try {
+      // Simulating an external API call using a promise
+      const response = await new Promise((resolve) => resolve({ data: books }));
+      res.status(200).json({ message: "Implemented by Async-Await", data: response.data });
+  } catch (error) {
+      res.status(500).json({ message: "Error fetching books", error: error.message });
   }
 });
 
-// Get book details based on author
-public_users.get('/author/:author', function (req, res) {
-  let author = req.params.author; // Extract author from request params
-  let booksByAuthor = [];
-
-  // Iterate through books object
-  for (let key in books) {
-      if (books[key].author.toLowerCase() === author.toLowerCase()) {
-          booksByAuthor.push({ isbn: key, title: books[key].title });
+// Get book details by ISBN using Async-Await
+public_users.get('/isbn/:isbn', async (req, res) => {
+  const { isbn } = req.params;
+  try {
+      if (books[isbn]) {
+        res.status(200).json({ message: "Implemented by Async-Await", book: books[isbn] });
+      } else {
+          res.status(404).json({ message: "Book not found" });
       }
-  }
-  // Check if books were found
-  if (booksByAuthor.length > 0) {
-      return res.status(200).json({ books: booksByAuthor });
-  } else {
-      return res.status(404).json({ message: "No books found for this author" });
+  } catch (error) {
+      res.status(500).json({ message: "Error fetching book by ISBN", error: error.message });
   }
 });
 
-
-// Get all books based on title
-public_users.get('/title/:title', function (req, res) {
-  let title = req.params.title; // Extract title from request params
-  let booksByTitle = [];
-
-  // Iterate through books object
-  for (let key in books) {
-      if (books[key].title.toLowerCase() === title.toLowerCase()) {
-          booksByTitle.push({ isbn: key, author: books[key].author });
+// Get books by author using Async-Await
+public_users.get('/author/:author', async (req, res) => {
+  const { author } = req.params;
+  try {
+      const booksByAuthor = Object.values(books).filter(book => book.author === author);
+      if (booksByAuthor.length > 0) {
+        res.status(200).json({ message: "Implemented by Async-Await", books: booksByAuthor });
+      } else {
+          res.status(404).json({ message: "No books found for this author" });
       }
-  }
-
-  // Check if books were found
-  if (booksByTitle.length > 0) {
-      return res.status(200).json({ books: booksByTitle });
-  } else {
-      return res.status(404).json({ message: "No books found with this title" });
+  } catch (error) {
+      res.status(500).json({ message: "Error fetching books by author", error: error.message });
   }
 });
 
-
-//  Get book review
-// Get book review
-public_users.get('/review/:isbn', function (req, res) {
-  let isbn = req.params.isbn; // Extract ISBN from request params
-
-  // Check if book exists
-  if (books[isbn]) {
-      return res.status(200).json({ reviews: books[isbn].reviews });
-  } else {
-      return res.status(404).json({ message: "Book not found" });
+// Get books by title using Async-Await
+public_users.get('/title/:title', async (req, res) => {
+  const { title } = req.params;
+  try {
+      const booksByTitle = Object.values(books).filter(book => book.title === title);
+      if (booksByTitle.length > 0) {
+        res.status(200).json({ message: "Implemented by Async-Await", books: booksByTitle });
+      } else {
+          res.status(404).json({ message: "No books found with this title" });
+      }
+  } catch (error) {
+      res.status(500).json({ message: "Error fetching books by title", error: error.message });
   }
 });
-
 
 module.exports.general = public_users;
