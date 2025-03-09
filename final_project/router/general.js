@@ -5,10 +5,24 @@ let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
 
-public_users.post("/register", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+public_users.post("/register", (req, res) => {
+  const { username, password } = req.body; // Extract username and password from request body
+
+  // Check if both fields are provided
+  if (!username || !password) {
+      return res.status(400).json({ message: "Username and password are required" });
+  }
+
+  // Check if the username already exists
+  if (users.some(user => user.username === username)) {
+      return res.status(409).json({ message: "Username already exists. Choose a different one." });
+  }
+
+  // Register the new user
+  users.push({ username, password });
+  return res.status(201).json({ message: "User successfully registered" });
 });
+
 
 // Get the book list available in the shop
 public_users.get('/', function (req, res) {
@@ -27,8 +41,6 @@ public_users.get('/isbn/:isbn', function (req, res) {
   }
 });
 
-  
-// Get book details based on author
 // Get book details based on author
 public_users.get('/author/:author', function (req, res) {
   let author = req.params.author; // Extract author from request params
@@ -49,7 +61,6 @@ public_users.get('/author/:author', function (req, res) {
 });
 
 
-// Get all books based on title
 // Get all books based on title
 public_users.get('/title/:title', function (req, res) {
   let title = req.params.title; // Extract title from request params
