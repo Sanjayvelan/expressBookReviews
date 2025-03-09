@@ -69,6 +69,34 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   return res.status(200).json({ message: "Review added/updated successfully", reviews: books[isbn].reviews });
 });
 
+// Delete a book review
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  const { isbn } = req.params;
+
+  // Check if user is logged in
+  if (!req.session.authorization) {
+      return res.status(401).json({ message: "Unauthorized: Please log in first" });
+  }
+
+  const username = jwt.verify(req.session.authorization.accessToken, "fingerprint_customer").username;
+
+  // Check if the book exists
+  if (!books[isbn]) {
+      return res.status(404).json({ message: "Book not found" });
+  }
+
+  // Check if the user has a review for this book
+  if (!books[isbn].reviews[username]) {
+      return res.status(404).json({ message: "Review not found for this user" });
+  }
+
+  // Delete the review
+  delete books[isbn].reviews[username];
+
+  return res.status(200).json({ message: "Review deleted successfully", reviews: books[isbn].reviews });
+});
+
+
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
